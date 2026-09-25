@@ -12,12 +12,13 @@ import java.nio.file.Path;
 public class AutoConfigManager {
 
     /**
-     * Synchronizes a static configuration class with a TOML file.
+     * Synchronizes a specific object instance's non-static fields with a TOML file.
+     * Use this for classes that do not use the @Config annotation.
      *
-     * @param configClass The class containing your @ConfigValue fields.
-     * @param fileName    The name of the config file (e.g., "mythos-common.toml").
+     * @param instance The object instance containing @ConfigValue fields.
+     * @param fileName The name of the config file (e.g., "my-instance.toml").
      */
-    public static void sync(Class configClass, String fileName) {
+    public static void syncInstance(Object instance, String fileName) {
         Path configPath = FMLPaths.CONFIGDIR.get().resolve(fileName);
 
         try (CommentedFileConfig configData = CommentedFileConfig.builder(configPath)
@@ -29,12 +30,8 @@ public class AutoConfigManager {
             configData.load();
             boolean fileModified = false;
 
-            for (Field field : configClass.getDeclaredFields()) {
+            for (Field field : instance.getClass().getDeclaredFields()) {
                 if (!field.isAnnotationPresent(ConfigValue.class)) continue;
-                if (!Modifier.isStatic(field.getModifiers())) {
-                    LibraryOfWonders.LOGGER.error("@ConfigValue applied to non-static field: {}", field.getName());
-                    continue;
-                }
 
                 ConfigValue annotation = field.getAnnotation(ConfigValue.class);
                 String tomlKey = annotation.name().isEmpty() ? field.getName() : annotation.name();
@@ -43,12 +40,12 @@ public class AutoConfigManager {
 
                 try {
                     if (!configData.contains(tomlKey)) {
-                        Object defaultValue = field.get(null);
+                        Object defaultValue = field.get(instance);
                         configData.set(tomlKey, defaultValue);
                         fileModified = true;
                     } else {
                         Object tomlValue = configData.get(tomlKey);
-                        setFieldValueSafely(field, tomlValue);
+                        setFieldValueSafely(field, instance, tomlValue);
                     }
 
                     if (!annotation.comment().isEmpty()) {
@@ -69,22 +66,21 @@ public class AutoConfigManager {
     /**
      * Helper to safely cast NightConfig types to Java field types.
      */
-    private static void setFieldValueSafely(Field field, Object tomlValue) throws IllegalAccessException {
+    private static void setFieldValueSafely(Field field, Object target, Object tomlValue) throws IllegalAccessException {
         if (tomlValue == null) return;
-
         Class type = field.getType();
 
         if (type == int.class || type == Integer.class) {
-            field.set(null, ((Number) tomlValue).intValue());
+            field.set(target, ((Number) tomlValue).intValue());
         } else if (type == double.class || type == Double.class) {
-            field.set(null, ((Number) tomlValue).doubleValue());
+            field.set(target, ((Number) tomlValue).doubleValue());
         } else if (type == float.class || type == Float.class) {
-            field.set(null, ((Number) tomlValue).floatValue());
+            field.set(target, ((Number) tomlValue).floatValue());
         } else if (type == long.class || type == Long.class) {
-            field.set(null, ((Number) tomlValue).longValue());
+            field.set(target, ((Number) tomlValue).longValue());
         } else {
             // Fallback for Booleans, Strings, and Lists
-            field.set(null, tomlValue);
+            field.set(target, tomlValue);
         }
     }
 }

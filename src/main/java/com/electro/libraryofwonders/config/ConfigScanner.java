@@ -29,7 +29,7 @@ public class ConfigScanner {
                             fileName = configClass.getSimpleName().toLowerCase() + ".toml";
                         }
 
-                        AutoConfigManager.sync(configClass, fileName);
+                        AutoConfigManager.syncInstance(configClass, fileName);
 
                     } catch (ClassNotFoundException e) {
                         LibraryOfWonders.LOGGER.error("Library of Wonders: Failed to load config class {}", annotationData.clazz().getClassName(), e);
