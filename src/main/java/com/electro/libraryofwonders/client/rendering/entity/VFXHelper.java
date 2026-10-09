@@ -164,7 +164,6 @@ public class VFXHelper {
                 Vec3 outer1 = new Vec3(c1 * outerRadius, 0, s1 * outerRadius);
                 Vec3 outer2 = new Vec3(c2 * outerRadius, 0, s2 * outerRadius);
 
-                // Draw a flat quad segment for the ring face
                 drawQuad(list, m, inner1, inner2, outer2, outer1, color, color, color, color);
             }
         }
@@ -215,7 +214,6 @@ public class VFXHelper {
 
             Vec3 mid = start.add(end).scale(0.5);
 
-            // Displace the midpoint randomly in 3D space
             if (displacement > 0.001f) {
                 double offsetX = (random.nextDouble() - 0.5) * displacement;
                 double offsetY = (random.nextDouble() - 0.5) * displacement;
