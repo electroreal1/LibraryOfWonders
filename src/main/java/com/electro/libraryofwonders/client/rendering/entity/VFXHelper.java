@@ -10,13 +10,13 @@ public class VFXHelper {
     public static class MathHelper {
         /** Creates an organic floating bobbing motion over time. */
         public static float floatMotion(float time, float speed, float scale) {
-            return (float) java.lang.Math.sin(time * speed) * scale;
+            return (float) Math.sin(time * speed) * scale;
         }
 
         /** Generates a sharp, jagged pulse for critical hits or aggressive throbbing. */
         public static float sharpPulse(float time, float speed) {
             float sin = Mth.sin(time * speed);
-            return sin > 0 ? (float) java.lang.Math.pow(sin, 3.0) : 0.0F;
+            return sin > 0 ? (float) Math.pow(sin, 3.0) : 0.0F;
         }
 
         /** Clamps and normalizes a value between a custom min and max. */
