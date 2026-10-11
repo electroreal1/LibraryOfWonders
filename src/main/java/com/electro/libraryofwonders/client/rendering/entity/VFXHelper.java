@@ -6,7 +6,6 @@ import net.minecraft.world.phys.Vec3;
 import org.joml.Matrix4f;
 
 public class VFXHelper {
-
     public static class MathHelper {
         /** Creates an organic floating bobbing motion over time. */
         public static float floatMotion(float time, float speed, float scale) {
