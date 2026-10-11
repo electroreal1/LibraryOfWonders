@@ -24,7 +24,7 @@ public class VFXHelper {
         }
     }
 
-    public class Colors {
+    public static class Colors {
         /** Compresses an alpha float and an RGB hex into a single ARGB integer. */
         public static int pack(float alpha, int rgb) {
             int a = Mth.clamp((int) (alpha * 255.0F), 0, 255);
@@ -51,17 +51,52 @@ public class VFXHelper {
             return (a << 24) | (r << 16) | (g << 8) | b;
         }
 
+        private static int argb(float alpha, int rgb) {
+            int a = Mth.clamp((int) (alpha * 255.0F), 0, 255);
+            return (a << 24) | (rgb & 0xFFFFFF);
+        }
     }
 
-    public class Shapes {
+    public static class Shapes {
         /**
          * Draws a 3D rectangular tube. Perfect for standard glowing lines, wireframes, and lasers.
          */
-        public static void drawVolumetricLine(GeometryList list, Matrix4f m, Vec3 start, Vec3 end, float thickness, int argbColor) {
+        public static void drawVolumetricLine(VertexList list, Matrix4f m, Vec3 start, Vec3 end, float thickness, int argbColor) {
             drawTaperedLine(list, m, start, end, thickness, thickness, argbColor, argbColor);
         }
 
-        public static void drawTaperedLine(GeometryList list, Matrix4f m, Vec3 start, Vec3 end, float thickStart, float thickEnd, int colorStart, int colorEnd) {
+        private void drawVolumetricLine(VertexList list, Matrix4f m, Vec3 start, Vec3 end, float thickness, int hexColor, float alpha) {
+            Vec3 dir = end.subtract(start);
+            if (dir.lengthSqr() < 0.0001) return;
+            dir = dir.normalize();
+
+            Vec3 up = new Vec3(0, 1, 0);
+            if (Math.abs(dir.y) > 0.99) {
+                up = new Vec3(1, 0, 0);
+            }
+
+            Vec3 right = dir.cross(up).normalize().scale(thickness / 2.0);
+            up = right.cross(dir).normalize().scale(thickness / 2.0);
+
+            Vec3 s1 = start.add(right).add(up);
+            Vec3 s2 = start.subtract(right).add(up);
+            Vec3 s3 = start.subtract(right).subtract(up);
+            Vec3 s4 = start.add(right).subtract(up);
+
+            Vec3 e1 = end.add(right).add(up);
+            Vec3 e2 = end.subtract(right).add(up);
+            Vec3 e3 = end.subtract(right).subtract(up);
+            Vec3 e4 = end.add(right).subtract(up);
+
+            int c = Colors.argb(alpha, hexColor);
+
+            addQuad(list, m, s1, s2, e2, e1, c);
+            addQuad(list, m, s4, s3, e3, e4, c);
+            addQuad(list, m, s1, s4, e4, e1, c);
+            addQuad(list, m, s2, s3, e3, e2, c);
+        }
+
+        public static void drawTaperedLine(VertexList list, Matrix4f m, Vec3 start, Vec3 end, float thickStart, float thickEnd, int colorStart, int colorEnd) {
             Vec3 dir = end.subtract(start);
             if (dir.lengthSqr() < 0.0001) return;
             dir = dir.normalize();
@@ -96,11 +131,18 @@ public class VFXHelper {
         /**
          * Pushes a basic 4-point quad to the buffer with independent vertex colors.
          */
-        public static void drawQuad(GeometryList list, Matrix4f m, Vec3 v1, Vec3 v2, Vec3 v3, Vec3 v4, int c1, int c2, int c3, int c4) {
+        public static void drawQuad(VertexList list, Matrix4f m, Vec3 v1, Vec3 v2, Vec3 v3, Vec3 v4, int c1, int c2, int c3, int c4) {
             list.add(m, (float) v1.x, (float) v1.y, (float) v1.z, c1);
             list.add(m, (float) v2.x, (float) v2.y, (float) v2.z, c2);
             list.add(m, (float) v3.x, (float) v3.y, (float) v3.z, c3);
             list.add(m, (float) v4.x, (float) v4.y, (float) v4.z, c4);
+        }
+
+        private void addQuad(VertexList list, Matrix4f m, Vec3 v1, Vec3 v2, Vec3 v3, Vec3 v4, int color) {
+            list.add(m, (float) v1.x, (float) v1.y, (float) v1.z, color);
+            list.add(m, (float) v2.x, (float) v2.y, (float) v2.z, color);
+            list.add(m, (float) v3.x, (float) v3.y, (float) v3.z, color);
+            list.add(m, (float) v4.x, (float) v4.y, (float) v4.z, color);
         }
 
         /**
@@ -132,7 +174,7 @@ public class VFXHelper {
         /**
          * Draws a 3D Spiral / Helix.
          */
-        public static void drawHelix(GeometryList list, Matrix4f m, float radius, float height, int turns, int segments, float thickness, int color) {
+        public static void drawHelix(VertexList list, Matrix4f m, float radius, float height, int turns, int segments, float thickness, int color) {
             for (int i = 0; i < segments; i++) {
                 float p1 = i / (float) segments;
                 float p2 = (i + 1) / (float) segments;
@@ -150,7 +192,7 @@ public class VFXHelper {
         /**
          * Draws a flat, solid circular ring/halo on the XZ plane.
          */
-        public static void drawFlatRing(GeometryList list, Matrix4f m, float innerRadius, float outerRadius, int segments, int color) {
+        public static void drawFlatRing(VertexList list, Matrix4f m, float innerRadius, float outerRadius, int segments, int color) {
             for (int i = 0; i < segments; i++) {
                 float a1 = (i / (float) segments) * Mth.TWO_PI;
                 float a2 = ((i + 1) / (float) segments) * Mth.TWO_PI;
@@ -170,7 +212,7 @@ public class VFXHelper {
         /**
          * Draws a camera-facing square particle (billboard) that always looks straight at the viewer.
          */
-        public static void drawBillboard(GeometryList list, Matrix4f m, Vec3 pos, Vec3 localCamPos, float size, int argbColor) {
+        public static void drawBillboard(VertexList list, Matrix4f m, Vec3 pos, Vec3 localCamPos, float size, int argbColor) {
             Vec3 toCam = localCamPos.subtract(pos);
             if (toCam.lengthSqr() < 0.0001) {
                 toCam = new Vec3(0, 0, 1);
@@ -199,12 +241,12 @@ public class VFXHelper {
          * Recursively generates a jagged, organic lightning arc between two points.
          * Call this inside your render loop with a time-based seed so the lightning violently crackles!
          */
-        public static void drawLightningArc(GeometryList list, Matrix4f m, Vec3 start, Vec3 end, float displacement, int generations, float thickness, int color, long seed) {
+        public static void drawLightningArc(VertexList list, Matrix4f m, Vec3 start, Vec3 end, float displacement, int generations, float thickness, int color, long seed) {
             RandomSource random = RandomSource.create(seed);
             drawLightningRecursive(list, m, start, end, displacement, generations, thickness, color, random);
         }
 
-        private static void drawLightningRecursive(GeometryList list, Matrix4f m, Vec3 start, Vec3 end, float displacement,
+        private static void drawLightningRecursive(VertexList list, Matrix4f m, Vec3 start, Vec3 end, float displacement,
                                                    int gen, float thickness, int color, RandomSource random) {
             if (gen <= 0) {
                 Shapes.drawVolumetricLine(list, m, start, end, thickness, color);
@@ -223,6 +265,89 @@ public class VFXHelper {
             float nextDisp = displacement * 0.5f;
             drawLightningRecursive(list, m, start, mid, nextDisp, gen - 1, thickness, color, random);
             drawLightningRecursive(list, m, mid, end, nextDisp, gen - 1, thickness, color, random);
+        }
+
+        public static Vec3[] generateBrainNodes(int count, float radius, float scatter) {
+            Vec3[] nodes = new Vec3[count];
+            float phi = (float) (Math.PI * (3.0 - Math.sqrt(5.0)));
+
+            RandomSource rand = RandomSource.create(999);
+
+            for (int i = 0; i < count; i++) {
+                float y = 1.0F - (i / (float) (count - 1)) * 2.0F;
+                float radiusAtY = (float) Math.sqrt(1 - y * y);
+                float theta = phi * i;
+
+                float x = (float) Math.cos(theta) * radiusAtY;
+                float z = (float) Math.sin(theta) * radiusAtY;
+
+                float scaleX = radius * 0.75F;
+                float scaleY = radius * 0.70F;
+                float scaleZ = radius * 1.05F;
+
+                float noiseX = (rand.nextFloat() - 0.5F) * scatter;
+                float noiseY = (rand.nextFloat() - 0.5F) * scatter;
+                float noiseZ = (rand.nextFloat() - 0.5F) * scatter;
+
+                nodes[i] = new Vec3(x * scaleX + noiseX, y * scaleY + noiseY, z * scaleZ + noiseZ);
+            }
+            return nodes;
+        }
+
+        /**
+         * Iterates through the generated nodes to draw a glassy outer shell and the independently pulsing inner neural network.
+         */
+        private void drawBrainConnections(VertexList glowList, VertexList darkList, Matrix4f baseMatrix, Vec3[] outerNodes, Vec3[] innerNodes, float t,
+                                          float alphaMult, RandomSource rand) {
+            float outerThresholdSqr = 4.2F * 4.2F;
+            int glassColor = 0xE6F2FF;
+
+            for (int i = 0; i < outerNodes.length; i++) {
+                for (int j = i + 1; j < outerNodes.length; j++) {
+                    if (outerNodes[i].distanceToSqr(outerNodes[j]) < outerThresholdSqr) {
+                        drawVolumetricLine(glowList, baseMatrix, outerNodes[i], outerNodes[j], 0.04F, glassColor, alphaMult * 0.25F);
+                    }
+                }
+            }
+
+            float innerThresholdSqr = 7.5F * 7.5F;
+
+            for (int i = 0; i < innerNodes.length; i++) {
+                for (int j = i + 1; j < innerNodes.length; j++) {
+                    if (innerNodes[i].distanceToSqr(innerNodes[j]) < innerThresholdSqr) {
+
+                        drawVolumetricLine(darkList, baseMatrix, innerNodes[i], innerNodes[j], 0.03F, 0x333344, alphaMult * 0.3F);
+
+                        float speed = 0.015F + rand.nextFloat() * 0.025F;
+                        float offset = rand.nextFloat() * 1000.0F;
+
+                        float cycleLength = 3.0F + rand.nextFloat() * 5.0F;
+                        float cycleProgress = ((t * speed) + offset) % cycleLength;
+
+                        if (cycleProgress < 1.0F) {
+                            float progress = cycleProgress;
+
+                            float hue = rand.nextFloat();
+                            int pulseColor = Mth.hsvToRgb(hue, 0.85F, 1.0F);
+
+                            Vec3 axonDir = innerNodes[j].subtract(innerNodes[i]);
+                            Vec3 pulseCenter = innerNodes[i].add(axonDir.scale(progress));
+
+                            float pulseLength = 1.2F;
+                            Vec3 pStart = pulseCenter.subtract(axonDir.normalize().scale(pulseLength / 2.0));
+                            Vec3 pEnd = pulseCenter.add(axonDir.normalize().scale(pulseLength / 2.0));
+
+                            float pulseAlpha = alphaMult;
+                            if (progress < 0.1F) pulseAlpha *= (progress / 0.1F);
+                            else if (progress > 0.9F) pulseAlpha *= ((1.0F - progress) / 0.1F);
+
+                            drawVolumetricLine(glowList, baseMatrix, pStart, pEnd, 0.15F, pulseColor, pulseAlpha);
+
+                            drawVolumetricLine(glowList, baseMatrix, pStart, pEnd, 0.06F, 0xFFFFFF, pulseAlpha * 0.9F);
+                        }
+                    }
+                }
+            }
         }
     }
 }

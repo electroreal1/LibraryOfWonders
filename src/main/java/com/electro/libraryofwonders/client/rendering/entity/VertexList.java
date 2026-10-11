@@ -5,17 +5,17 @@ import org.joml.Matrix4f;
 
 import java.util.Arrays;
 
-public class GeometryList {
+public class VertexList {
     private float[] pos;
     private int[] col;
     private Matrix4f[] matrices;
     private int size;
 
-    public GeometryList() {
+    public VertexList() {
         this(32678);
     }
 
-    public GeometryList(int initialCapacity) {
+    public VertexList(int initialCapacity) {
         this.pos = new float[3 * initialCapacity];
         this.col = new int[initialCapacity];
         this.matrices = new Matrix4f[initialCapacity];
