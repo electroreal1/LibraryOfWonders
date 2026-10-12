@@ -22,7 +22,7 @@ public class RendererAutomator {
      * registers them to Minecraft's rendering engine.
      */
     @SubscribeEvent
-    @SuppressWarnings({"unchecked", "rawtypes"})
+    @SuppressWarnings({"unchecked"})
     public static void onRegisterRenderers(EntityRenderersEvent.RegisterRenderers event) {
         Type annotationType = Type.getType(BindRenderer.class);
 
