@@ -35,7 +35,7 @@ A  library mod designed to centralize all my modding needs
 '''
 
 # The [[mixins]] block allows you to declare your mixin config to FML so that it gets loaded.
-[[mixins]]
+# [[mixins]]
 #config="${mod_id}.mixins.json"
 
 # The [[accessTransformers]] block allows you to declare where your AT file is.

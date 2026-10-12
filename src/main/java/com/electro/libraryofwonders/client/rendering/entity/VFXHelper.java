@@ -1,5 +1,6 @@
 package com.electro.libraryofwonders.client.rendering.entity;
 
+import com.mojang.blaze3d.vertex.VertexConsumer;
 import net.minecraft.util.Mth;
 import net.minecraft.util.RandomSource;
 import net.minecraft.world.phys.Vec3;
@@ -51,7 +52,7 @@ public class VFXHelper {
             return (a << 24) | (r << 16) | (g << 8) | b;
         }
 
-        private static int argb(float alpha, int rgb) {
+        public static int argb(float alpha, int rgb) {
             int a = Mth.clamp((int) (alpha * 255.0F), 0, 255);
             return (a << 24) | (rgb & 0xFFFFFF);
         }
@@ -65,7 +66,7 @@ public class VFXHelper {
             drawTaperedLine(list, m, start, end, thickness, thickness, argbColor, argbColor);
         }
 
-        private void drawVolumetricLine(VertexList list, Matrix4f m, Vec3 start, Vec3 end, float thickness, int hexColor, float alpha) {
+        public void drawVolumetricLine(VertexList list, Matrix4f m, Vec3 start, Vec3 end, float thickness, int hexColor, float alpha) {
             Vec3 dir = end.subtract(start);
             if (dir.lengthSqr() < 0.0001) return;
             dir = dir.normalize();
@@ -138,11 +139,18 @@ public class VFXHelper {
             list.add(m, (float) v4.x, (float) v4.y, (float) v4.z, c4);
         }
 
-        private void addQuad(VertexList list, Matrix4f m, Vec3 v1, Vec3 v2, Vec3 v3, Vec3 v4, int color) {
+        public void addQuad(VertexList list, Matrix4f m, Vec3 v1, Vec3 v2, Vec3 v3, Vec3 v4, int color) {
             list.add(m, (float) v1.x, (float) v1.y, (float) v1.z, color);
             list.add(m, (float) v2.x, (float) v2.y, (float) v2.z, color);
             list.add(m, (float) v3.x, (float) v3.y, (float) v3.z, color);
             list.add(m, (float) v4.x, (float) v4.y, (float) v4.z, color);
+        }
+
+        /**
+         * Draws a single vertex rather than a collection of them, very useful for tiny things.
+         */
+        public static void writeVertex(Matrix4f matrix, VertexConsumer consumer, float x, float y, float z, int r, int g, int b, int a) {
+            consumer.addVertex(matrix, x, y, z).setColor(r, g, b, a);
         }
 
         /**
@@ -297,7 +305,7 @@ public class VFXHelper {
         /**
          * Iterates through the generated nodes to draw a glassy outer shell and the independently pulsing inner neural network.
          */
-        private void drawBrainConnections(VertexList glowList, VertexList darkList, Matrix4f baseMatrix, Vec3[] outerNodes, Vec3[] innerNodes, float t,
+        public void drawBrainConnections(VertexList glowList, VertexList darkList, Matrix4f baseMatrix, Vec3[] outerNodes, Vec3[] innerNodes, float t,
                                           float alphaMult, RandomSource rand) {
             float outerThresholdSqr = 4.2F * 4.2F;
             int glassColor = 0xE6F2FF;
