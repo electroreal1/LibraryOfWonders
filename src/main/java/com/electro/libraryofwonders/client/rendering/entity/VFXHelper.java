@@ -7,23 +7,6 @@ import net.minecraft.world.phys.Vec3;
 import org.joml.Matrix4f;
 
 public class VFXHelper {
-    public static class MathHelper {
-        /** Creates an organic floating bobbing motion over time. */
-        public static float floatMotion(float time, float speed, float scale) {
-            return (float) Math.sin(time * speed) * scale;
-        }
-
-        /** Generates a sharp, jagged pulse for critical hits or aggressive throbbing. */
-        public static float sharpPulse(float time, float speed) {
-            float sin = Mth.sin(time * speed);
-            return sin > 0 ? (float) Math.pow(sin, 3.0) : 0.0F;
-        }
-
-        /** Clamps and normalizes a value between a custom min and max. */
-        public static float remap(float value, float min1, float max1, float min2, float max2) {
-            return min2 + (value - min1) * (max2 - min2) / (max1 - min1);
-        }
-    }
 
     public static class Colors {
         /** Compresses an alpha float and an RGB hex into a single ARGB integer. */
@@ -66,7 +49,7 @@ public class VFXHelper {
             drawTaperedLine(list, m, start, end, thickness, thickness, argbColor, argbColor);
         }
 
-        public void drawVolumetricLine(VertexList list, Matrix4f m, Vec3 start, Vec3 end, float thickness, int hexColor, float alpha) {
+        public static void drawVolumetricLine(VertexList list, Matrix4f m, Vec3 start, Vec3 end, float thickness, int hexColor, float alpha) {
             Vec3 dir = end.subtract(start);
             if (dir.lengthSqr() < 0.0001) return;
             dir = dir.normalize();
@@ -139,7 +122,7 @@ public class VFXHelper {
             list.add(m, (float) v4.x, (float) v4.y, (float) v4.z, c4);
         }
 
-        public void addQuad(VertexList list, Matrix4f m, Vec3 v1, Vec3 v2, Vec3 v3, Vec3 v4, int color) {
+        public static void addQuad(VertexList list, Matrix4f m, Vec3 v1, Vec3 v2, Vec3 v3, Vec3 v4, int color) {
             list.add(m, (float) v1.x, (float) v1.y, (float) v1.z, color);
             list.add(m, (float) v2.x, (float) v2.y, (float) v2.z, color);
             list.add(m, (float) v3.x, (float) v3.y, (float) v3.z, color);
